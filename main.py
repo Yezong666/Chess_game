@@ -2,8 +2,8 @@ import pygame
 from chessboard import Chess_board
 
 #temporary consts
-SCREEN_WIDTH = 1440
-SCREEN_HEIGHT = 900
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 800
 
 def main():
     #Init part
@@ -16,6 +16,7 @@ def main():
 
     chess_board = Chess_board()
     chess_board.draw(screen)
+    chessboard = chess_board.chessboard
     selected_piece = [False, 0, 0]      #(Piece, x, y)
     possible_moves = []
     dt = 0
@@ -26,15 +27,21 @@ def main():
                 return 0
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_loc = pygame.mouse.get_pos()
-                mouse_loc_x = (mouse_loc[0] - (mouse_loc[0] % 100)) / 100
-                mouse_loc_y = (mouse_loc[1]  - (mouse_loc[1] % 100)) / 100
-                selected_piece = chess_board.select_piece(screen, chess_board.chessboard, int(mouse_loc_x), int(mouse_loc_y), selected_piece)
-                chess_board.remove_highlighted_moves(screen, chess_board.chessboard, possible_moves)
+                mouse_loc_x = int((mouse_loc[0] - (mouse_loc[0] % 100)) / 100)
+                mouse_loc_y = int((mouse_loc[1]  - (mouse_loc[1] % 100)) / 100)
+                print(f"mouse_loc_x = {mouse_loc_x}, mouse_loc_y = {mouse_loc_y}, possible_moves = {possible_moves}")
+                if (mouse_loc_x, mouse_loc_y) in possible_moves:
+                    chess_board.move_piece(screen, chessboard, mouse_loc_x, mouse_loc_y, selected_piece)
+                    selected_piece = (False, 0, 0)
+                    possible_moves = chess_board.remove_highlighted_moves(screen, chessboard, possible_moves)
+                else:
+                    selected_piece = chess_board.select_piece(screen, chessboard, mouse_loc_x, mouse_loc_y, selected_piece)
+                    possible_moves = chess_board.remove_highlighted_moves(screen, chessboard, possible_moves)
                 if selected_piece[0] != False:
-                    possible_moves = chess_board.check_moves(screen, chess_board.chessboard, selected_piece)
+                    possible_moves = chess_board.check_moves(screen, chessboard, selected_piece)
         
            
-        print(possible_moves)
+        
         pygame.display.flip()
         
         
