@@ -3,6 +3,7 @@ import pygame
 COLOR_RED = (84, 0, 0)
 COLOR_WHITE = (255, 255, 255)
 DARK_YELLOW = (186,142,35)
+COLOR_PINK = (255,105,180)
 WIDTH_SIDE = 100
 
 
@@ -14,7 +15,7 @@ class Chess_board():
             ["bP", "bP", "bP", "bP", "bP", "bP", "bP", "bP"],
             ["","","","","","","",""],
             ["","","","","","","",""],
-            ["","","","","","","",""],
+            ["","","","wB","bB","","",""],
             ["","","","","","","",""],
             ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
             ["wR", "wK", "wB", "wQu", "wKi", "wB", "wK", "wR"]
@@ -28,9 +29,9 @@ class Chess_board():
         for line in self.chessboard:
             for tile in line:
                 if flipcolor % 2:
-                    pygame.draw.rect(screen, COLOR_RED, (x*WIDTH_SIDE, y *WIDTH_SIDE,WIDTH_SIDE ,WIDTH_SIDE))   
+                    self.highlight_tile(screen, x, y, COLOR_RED)   
                 else:
-                    pygame.draw.rect(screen, COLOR_WHITE, (x*WIDTH_SIDE, y *WIDTH_SIDE,WIDTH_SIDE ,WIDTH_SIDE))
+                    self.highlight_tile(screen, x, y, COLOR_WHITE)
                 if tile != "":
                     self.put_piece(screen, tile, x, y)
                 flipcolor+=1
@@ -80,13 +81,13 @@ class Chess_board():
         if x >= 0 and x <= 7 and y >= 0 and y <= 7:
             if selected_piece[0] != False:
                 if (selected_piece[1] + selected_piece[2]) %2:
-                    pygame.draw.rect(screen, COLOR_RED, (selected_piece[1]*WIDTH_SIDE, selected_piece[2] *WIDTH_SIDE,WIDTH_SIDE ,WIDTH_SIDE))
+                    self.highlight_tile(screen, selected_piece[1], selected_piece[2], COLOR_RED)
                 else: 
-                    pygame.draw.rect(screen, COLOR_WHITE, (selected_piece[1]*WIDTH_SIDE, selected_piece[2] *WIDTH_SIDE,WIDTH_SIDE ,WIDTH_SIDE))
+                    self.highlight_tile(screen, selected_piece[1], selected_piece[2], COLOR_WHITE)
                 self.put_piece(screen, chessboard[selected_piece[2]][selected_piece[1]], selected_piece[1] ,selected_piece[2])
 
             if chessboard[y][x] != "":
-                pygame.draw.rect(screen, DARK_YELLOW, (x*WIDTH_SIDE, y *WIDTH_SIDE,WIDTH_SIDE ,WIDTH_SIDE))
+                self.highlight_tile(screen, x, y, DARK_YELLOW)
                 self.put_piece(screen, chessboard[y][x], x ,y)
                 return (chessboard[y][x], x, y)
         return (False, 0, 0)
@@ -111,7 +112,14 @@ class Chess_board():
                     while (chessboard[y-i][x]) == "" and num_moves > 0:
                         moves.append((x,y-i))
                         num_moves -= 1
-                        i+=1            
+                        i+=1
+                    if (y-1) >= 0:
+                        if (x-1) >= 0 and chessboard[y-1][x-1] != "":
+                            if chessboard[y-1][x-1][0] == "b":
+                                moves.append((x-1, y-1))
+                        if (x+1) <= 7 and chessboard[y-1][x+1] != "":
+                            if chessboard[y-1][x+1][0] == "b":
+                                moves.append((x+1, y-1))
                 else:
                     if y == 1:
                         num_moves = 2
@@ -122,6 +130,13 @@ class Chess_board():
                         moves.append((x,y+i))
                         num_moves -= 1
                         i+=1
+                    if (y+1) >= 0:
+                        if (x-1) >= 0 and chessboard[y+1][x-1] != "":
+                            if chessboard[y+1][x-1][0] == "w":
+                                moves.append((x-1, y+1))
+                        if (x+1) <= 7 and chessboard[y+1][x+1] != "":
+                            if chessboard[y+1][x+1][0] == "w":
+                                moves.append((x+1, y+1))
             case "R":
                 couples = [(1, 0), (0, 1), (-1, 0), (0, -1)]
                 for couple in couples:
@@ -131,6 +146,8 @@ class Chess_board():
                             moves.append((x+i*couple[0],y+i*couple[1]))
                             i+=1
                         else:
+                            if chessboard[y+i*couple[1]][x+i*couple[0]][0] != color_piece:
+                                moves.append((x+i*couple[0],y+i*couple[1]))
                             i = 10
 
             case "K":
@@ -160,7 +177,7 @@ class Chess_board():
                         if chessboard[y-2][x+1] == "":
                             moves.append((x+1,y-2))
                     if x - 1 >= 0:
-                        if chessboard[y-2][x+1] == "":
+                        if chessboard[y-2][x-1] == "":
                             moves.append((x-1,y-2))
             case "B":
                 couples = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
@@ -171,6 +188,8 @@ class Chess_board():
                             moves.append((x+i*couple[0],y+i*couple[1]))
                             i+=1
                         else:
+                            if chessboard[y+i*couple[1]][x+i*couple[0]][0] != color_piece:
+                                moves.append((x+i*couple[0],y+i*couple[1]))
                             i = 10
             case "Qu":
                 #bishop moves
@@ -182,6 +201,8 @@ class Chess_board():
                             moves.append((x+i*couple[0],y+i*couple[1]))
                             i+=1
                         else:
+                            if chessboard[y+i*couple[1]][x+i*couple[0]][0] != color_piece:
+                                moves.append((x+i*couple[0],y+i*couple[1]))
                             i = 10
                 #+ rook moves
                 couples = [(1, 0), (0, 1), (-1, 0), (0, -1)]
@@ -192,37 +213,43 @@ class Chess_board():
                             moves.append((x+i*couple[0],y+i*couple[1]))
                             i+=1
                         else:
+                            if chessboard[y+i*couple[1]][x+i*couple[0]][0] != color_piece:
+                                moves.append((x+i*couple[0],y+i*couple[1]))
                             i = 10
             case "Ki":
                 if x + 1 <= 7:
                     if y + 1 <= 7:
-                        if chessboard[y+1][x+1] == "":
+                        if chessboard[y+1][x+1] == "" or chessboard[y+1][x+1][0] != color_piece:
                             moves.append((x+1,y+1))
                     if y - 1 >= 0:
-                        if chessboard[y-1][x+1] == "":
+                        if chessboard[y-1][x+1] == "" or chessboard[y-1][x+1][0] != color_piece:
                             moves.append((x+1,y-1))
-                    if chessboard[y][x+1] == "":
+                    if chessboard[y][x+1] == "" or chessboard[y][x+1][0] != color_piece:
                             moves.append((x+1,y))
                 if x - 1 >= 0:
                     if y + 1 <= 7:
-                        if chessboard[y+1][x-1] == "":
+                        if chessboard[y+1][x-1] == "" or chessboard[y+1][x-1][0] != color_piece:
                             moves.append((x-1,y+1))
                     if y - 1 >= 0:
-                        if chessboard[y-1][x-1] == "":
+                        if chessboard[y-1][x-1] == "" or chessboard[y-1][x-1][0] != color_piece:
                             moves.append((x-1,y-1))
-                    if chessboard[y][x-1] == "":
+                    if chessboard[y][x-1] == "" or chessboard[y][x-1][0] != color_piece:
                             moves.append((x-1,y))
                 if y + 1 <= 7:
-                    if chessboard[y+1][x] == "":
+                    if chessboard[y+1][x] == "" or chessboard[y+1][x][0] != color_piece:
                             moves.append((x,y+1))
                 if y - 1 >= 0:
-                        if chessboard[y-1][x] == "":
+                        if chessboard[y-1][x] == "" or chessboard[y-1][x][0] != color_piece:
                             moves.append((x,y-1))
             case _:
                 print("ERROR SUPPOSED TO NEVER HAPPEN"
                       f"piece was {piece}")
         for move in moves:
-            self.highlight_tile(screen, move[0], move[1], DARK_YELLOW)   
+            if chessboard[move[1]][move[0]] == "":
+                self.highlight_tile(screen, move[0], move[1], DARK_YELLOW)
+            else:
+                self.highlight_tile(screen, move[0], move[1], COLOR_PINK)
+                self.put_piece(screen, chessboard[move[1]][move[0]], move[0], move[1])
         return moves
     
 

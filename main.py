@@ -29,7 +29,6 @@ def main():
                 mouse_loc = pygame.mouse.get_pos()
                 mouse_loc_x = int((mouse_loc[0] - (mouse_loc[0] % 100)) / 100)
                 mouse_loc_y = int((mouse_loc[1]  - (mouse_loc[1] % 100)) / 100)
-                print(f"mouse_loc_x = {mouse_loc_x}, mouse_loc_y = {mouse_loc_y}, possible_moves = {possible_moves}")
                 if (mouse_loc_x, mouse_loc_y) in possible_moves:
                     chess_board.move_piece(screen, chessboard, mouse_loc_x, mouse_loc_y, selected_piece)
                     selected_piece = (False, 0, 0)
