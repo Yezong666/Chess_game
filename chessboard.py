@@ -14,7 +14,7 @@ class Chess_board():
             ["bR", "bK", "bB", "bQu", "bKi", "bB", "bK", "bR"],
             ["bP", "bP", "bP", "bP", "bP", "bP", "bP", "bP"],
             [" "," "," "," "," "," "," "," "],
-            [" "," "," "," "," "," "," "," "],
+            [" "," "," "," ","bKi"," "," "," "],
             [" "," "," "," "," "," "," "," "],
             [" "," "," "," "," "," "," "," "],
             ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
@@ -100,7 +100,6 @@ class Chess_board():
         x = selected_piece[1]
         y = selected_piece[2]
         moves = []
-        print(f"ally = {ally}")
         match piece:
             case "P":
                 if color_piece == "w":
@@ -243,7 +242,6 @@ class Chess_board():
             case _:
                 print("ERROR SUPPOSED TO NEVER HAPPEN"
                       f"piece was '{piece}'")
-        print(moves)
         return moves
     
 
@@ -319,7 +317,7 @@ class Chess_board():
             i = 0
         return chess_state
 
-    def white_attack(self, chessboard):
+    def pieces_attacked(self, chessboard, turn):
         chess_state = [
             [0,0,0,0,0,0,0,0],
             [0,0,0,0,0,0,0,0],
@@ -334,25 +332,140 @@ class Chess_board():
         j = 0
         for line in chessboard:
             for tile in line:
-                if tile[0] == "w":
-                    get_moves = self.check_moves(chessboard, (tile, i, j), ally=True)
-                    for move in get_moves:
-                        chess_state[move[1]][move[0]] -= 1
+                if turn%2:
+                    if tile[0] == "w":
+                        get_moves = self.check_moves(chessboard, (tile, i, j))
+                        for move in get_moves:
+                            chess_state[move[1]][move[0]] -= 1
+                else:
+                    if tile[0] == "b":
+                        get_moves = self.check_moves(chessboard, (tile, i, j))
+                        for move in get_moves:
+                            chess_state[move[1]][move[0]] -= 1
                 i+=1
             j+=1
             i = 0
         return chess_state
         
-    def get_black_pieces_attacked(self, chessboard, white_attacking):
+    def get_pieces_attacked(self, chessboard, chess_state): 
         pieces = []
         i = 0
         j = 0
-        for line in white_attacking:
+        for line in chess_state:
             for tile in line:
                 if tile < 0:
-                    if chessboard[j][i][0] == "b":
+                    if chessboard[j][i][0] == "b" or chessboard[j][i][0] == "w":
                         pieces.append((chessboard[j][i], i, j))
                 i+=1
             j+=1
             i = 0
         return pieces
+    
+    def check_king_moves(self, chessboard, chessboard_from_attacker, king_piece, attackers=None):
+        all_king_moves = self.check_moves(chessboard, king_piece)
+        king_moves = []
+        if attackers != None:
+            for attacker in attackers:
+                if attackers[0][:1] != "K" or attackers[0][:1] != "P":
+                    couple_x = 0
+                    couple_y = 0
+                    if attacker[1] < king_piece[1]:
+                        couple_x = 1
+                        if attacker[2] < king_piece[2]:
+                            couple_y = 1
+                        elif attacker[2] > king_piece[2]:
+                            couple_y = -1
+                    elif attacker[1] > king_piece[1]:
+                        couple_x = -1
+                        if attacker[2] < king_piece[2]:
+                            couple_y = 1
+                        elif attacker[2] > king_piece[2]:
+                            couple_y = -1
+                    elif attacker[1] == king_piece[1]:
+                        if attacker[2] < king_piece[2]:
+                            couple_y = 1
+                        elif attacker[2] > king_piece[2]:
+                            couple_y = -1
+                    i = 1
+                    while((attacker[1]+i*couple_x) >= 0 and (attacker[1]+i*couple_x) <= 7 and (attacker[2]+i*couple_y) >= 0 and (attacker[2]+i*couple_y) <= 7):
+                        if chessboard[attacker[2]+i*couple_y][attacker[1]+i*couple_x] == king_piece[0]:
+                            chessboard_from_attacker[attacker[2]+i*couple_y][attacker[1]+i*couple_x] = -1
+                            i = i + 1
+                            if ((attacker[1]+i*couple_x) >= 0 and (attacker[1]+i*couple_x) <= 7 and (attacker[2]+i*couple_y) >= 0 and (attacker[2]+i*couple_y) <= 7):
+                                chessboard_from_attacker[attacker[2]+i*couple_y][attacker[1]+i*couple_x] = -1
+                            i = 10
+                        else:
+                            i = i+1
+        
+        for move in all_king_moves:
+            if chessboard_from_attacker[move[1]][move[0]] >= 0:
+                king_moves.append(move)
+        for line in chessboard_from_attacker:
+            print(line)
+        return king_moves
+    
+    def find_piece_attacking_king(self, chessboard, king_piece):
+        attackers = []
+        i = 0
+        j = 0
+        for line in chessboard:
+            for tile in line:
+                if tile[0] != king_piece[0][0] and tile[0] != " ":
+                    piece_moves = self.check_moves(chessboard, (tile, i, j))
+                    for move in piece_moves:
+                        if move[0] == king_piece[1] and move[1] == king_piece[2]:
+                            attackers.append((tile, i, j))
+                i+=1
+            j+=1
+            i =0
+        return attackers
+    
+    def find_tiles_to_block(self, chessboard, king_loc, attackers):
+        tiles_to_block = []
+        if len(attackers) > 1:
+            return tiles_to_block
+        attacker = attackers[0]
+        if attackers[0][:1] == "K" or attackers[0][:1] == "P":
+            return tiles_to_block
+        
+        couple_x = 0
+        couple_y = 0
+        if attacker[1] < king_loc[1]:
+            couple_x = 1
+            if attacker[2] < king_loc[2]:
+                couple_y = 1
+            elif attacker[2] > king_loc[2]:
+                couple_y = -1
+        elif attacker[1] > king_loc[1]:
+            couple_x = -1
+            if attacker[2] < king_loc[2]:
+                couple_y = 1
+            elif attacker[2] > king_loc[2]:
+                couple_y = -1
+        elif attacker[1] == king_loc[1]:
+            if attacker[2] < king_loc[2]:
+                couple_y = 1
+            elif attacker[2] > king_loc[2]:
+                couple_y = -1
+        i = 1
+        couple = (couple_x, couple_y)
+        x = attacker[1]
+        y = attacker[2]
+        while((x+i*couple[0]) >= 0 and (x+i*couple[0]) <= 7 and (y+i*couple[1]) >= 0 and (y+i*couple[1]) <= 7):
+            if chessboard[y+i*couple[1]][x+i*couple[0]] == " ":
+                tiles_to_block.append((x+i*couple[0],y+i*couple[1]))
+                i+=1
+            else:
+                i = 10
+            
+        return tiles_to_block
+            
+
+    #while((x+i*couple[0]) >= 0 and (x+i*couple[0]) <= 7 and (y+i*couple[1]) >= 0 and (y+i*couple[1]) <= 7):
+    #    if chessboard[y+i*couple[1]][x+i*couple[0]] == " ":
+
+
+        
+
+
+

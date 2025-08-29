@@ -30,6 +30,7 @@ def main():
         [0,0,0,0,0,0,0,0],
         [0,0,0,0,0,0,0,0]
     ]
+    king_attacked = 0   #0 = not attacked ; 1 = check ; 2 = checkmate
     dt = 0
     while(1):
         
@@ -46,38 +47,75 @@ def main():
                     possible_moves = chess_board.remove_highlighted_moves(screen, chessboard, possible_moves)
                     turn+=1
                     chessboard_state = chess_board.get_state(chessboard)
-                    chessboard_white_attack = chess_board.white_attack(chessboard)
-                    pieces_attacked = chess_board.get_black_pieces_attacked(chessboard, chessboard_white_attack)
+                    king_attacked = 0
+                    chessboard_pieces_attacked = chess_board.pieces_attacked(chessboard, turn)
+                    pieces_attacked = chess_board.get_pieces_attacked(chessboard, chessboard_pieces_attacked)
                     for piece in pieces_attacked:
-                        if piece[0] == "bKi":
-                            pass # = King attacked, check if it's a Checkmate, if not do a move to stop the check
-                    danger = chess_board.get_black_pieces_attacked(chessboard, chessboard_state)    #If not check, do a move (still not done)
-                    print("chessboard_state")
-                    for line in chessboard_state:
-                        print(line)
-                    print("\n")
-                    print("chessboard_white_attack")
-                    for line in chessboard_white_attack:
-                        print(line)
-                    print("\n")
-                    print(pieces_attacked)
+                        if piece[0][1:] == "Ki": 
+                            king_attacked = 1
+                            king_loc = piece
+                            print(f"King attacked at {king_loc}")  #Make a "check" animation ? 
+                    
                 else:
-                    if chessboard[mouse_loc_y][mouse_loc_x][0] == "w":
-                        if (turn+1)%2:
-                            selected_piece = chess_board.select_piece(screen, chessboard, mouse_loc_x, mouse_loc_y, selected_piece)
-                            possible_moves = chess_board.remove_highlighted_moves(screen, chessboard, possible_moves)
-                    elif chessboard[mouse_loc_y][mouse_loc_x][0] == "b":
-                        if turn%2:
-                            selected_piece = chess_board.select_piece(screen, chessboard, mouse_loc_x, mouse_loc_y, selected_piece)
-                            possible_moves = chess_board.remove_highlighted_moves(screen, chessboard, possible_moves)
+                    if chessboard[mouse_loc_y][mouse_loc_x][0] == "w" and (turn+1)%2:
+                        selected_piece = chess_board.select_piece(screen, chessboard, mouse_loc_x, mouse_loc_y, selected_piece)
+                        possible_moves = chess_board.remove_highlighted_moves(screen, chessboard, possible_moves)
+
+                    elif chessboard[mouse_loc_y][mouse_loc_x][0] == "b" and turn%2:
+                        selected_piece = chess_board.select_piece(screen, chessboard, mouse_loc_x, mouse_loc_y, selected_piece)
+                        possible_moves = chess_board.remove_highlighted_moves(screen, chessboard, possible_moves)
+                        
                     else:
                         if selected_piece[0] != False:
                             possible_moves = chess_board.remove_highlighted_moves(screen, chessboard, possible_moves)
                             chess_board.unselect_piece(screen, selected_piece)
                             selected_piece = (False, 0, 0)
+                           #King attacked, try to find moves that can save the king, if can't it's checkmate
+                        #only 1 attacker, can be killed or blocked and be safe
+                                #add in possible moves all pieces who can kill the attacker
+                                #add in possible moves all moves blocking the attacker
+                        
+                        #chess_board.highlight_moves(screen, chessboard, king_moves)
+                        #print (king_moves)
+                            #find_pieces_attacking_king()
+                            #chessboard_black_attack()
+                            #find_pieces_attacking_attacker()
+                            #for pieces in pieces_attacking_attacker:
+                            #   simulate attack and check again if king would be under attack
+                            #   if still under attack, cancel and go to the next one in the list
+                            #if king still under attack (attacker can't be killed):
+                            #   get_tiles_to_block()
+                            #   find_pieces_can_block()
+                            #   sort pieces from weakest to strongest (pawn > bishop > knight > rook > queen)
+                            #   for pieces in find_pieces_can_block:
+                            #       simulate block and check again if king would still be under attack
+                            #       if still under attackn cancel and go to the next one in list
+                chessboard_pieces_attacked = chess_board.pieces_attacked(chessboard, turn)    #If not check, do a move (still not done)
+                    
+
                 if selected_piece[0] != False:
-                    possible_moves = chess_board.check_moves(chessboard, selected_piece)
-                    chess_board.highlight_moves(screen, chessboard, possible_moves)
+                    if king_attacked == 0:
+                        if selected_piece[0][1:] == "Ki":
+                            possible_moves = chess_board.check_king_moves(chessboard, chessboard_pieces_attacked, selected_piece)
+                        else:
+                            possible_moves = chess_board.check_moves(chessboard, selected_piece)
+                        chess_board.highlight_moves(screen, chessboard, possible_moves)
+                    else:
+                        attackers = chess_board.find_piece_attacking_king(chessboard, king_loc)
+                        piece_moves = chess_board.check_moves(chessboard, selected_piece)
+                        tiles_to_block = chess_board.find_tiles_to_block(chessboard, king_loc, attackers)
+                        possible_moves = []
+                        print(f"tiles_to_block = {tiles_to_block}")
+                        print("blublu")
+                        if len(attackers) == 1:
+                            for move in piece_moves:
+                                if (move[0] == attackers[0][1] and move[1] == attackers[0][2]) or move in tiles_to_block:
+                                    possible_moves.append(move)
+                        if selected_piece[0][1:] == "Ki":
+                            possible_moves = chess_board.check_king_moves(chessboard, chessboard_pieces_attacked, king_loc, attackers)
+                        
+                        print(possible_moves)
+                        chess_board.highlight_moves(screen, chessboard, possible_moves)
         
            
         
