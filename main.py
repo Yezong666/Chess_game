@@ -105,8 +105,6 @@ def main():
                         piece_moves = chess_board.check_moves(chessboard, selected_piece)
                         tiles_to_block = chess_board.find_tiles_to_block(chessboard, king_loc, attackers)
                         possible_moves = []
-                        print(f"tiles_to_block = {tiles_to_block}")
-                        print("blublu")
                         if len(attackers) == 1:
                             for move in piece_moves:
                                 if (move[0] == attackers[0][1] and move[1] == attackers[0][2]) or move in tiles_to_block:

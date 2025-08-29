@@ -461,8 +461,7 @@ class Chess_board():
         return tiles_to_block
             
 
-    #while((x+i*couple[0]) >= 0 and (x+i*couple[0]) <= 7 and (y+i*couple[1]) >= 0 and (y+i*couple[1]) <= 7):
-    #    if chessboard[y+i*couple[1]][x+i*couple[0]] == " ":
+
 
 
         
